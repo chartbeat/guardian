@@ -1,37 +1,49 @@
-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+NUMBER_TOP = 10;
+SORT_TYPE = "engagedTime";
+SORT_ORDER = "descending";
 
-var req = new XMLHttpRequest();
-req.open(
-    "GET",
-    "http://api.flickr.com/services/rest/?" +
-        "method=flickr.photos.search&" +
-        "api_key=90485e931f687a9b9c2a66bf58a3861a&" +
-        "text=hello%20world&" +
-        "safe_search=1&" +  // 1 is "safe"
-        "content_type=1&" +  // 1 is "photos only"
-        "sort=relevance&" +  // another good one is "interestingness-desc"
-        "per_page=20",
-    true);
-req.onload = showPhotos;
-req.send(null);
+// chrome.extension.sendRequest({
+//     method: 'sendStats',
+//     number: NUMBER_TOP,
+//     sortType: SORT_TYPE,
+//     order: SORT_ORDER,
+// }, function(response){
+//     urlsTop = response.urlsTop;
+//     for(var i = 0; i < urlsTop.length; i++) {
+//         el = $(document.createElement('ul')).addClass('row');
+//         siteName = $(document.createElement('li')).addClass('siteName').text(urlsTop[i].name);
+//         engagedTime = $(document.createElement('li')).addClass('engagedTime').text(humanizeTime(urlsTop[i].engagedTime));
+//         idleTime = $(document.createElement('li')).addClass('idleTime').text(humanizeTime(urlsTop[i].idleTime));
+//         $(el).append(siteName, engagedTime, idleTime);
+//         $('div.table').append(el);
+//     }
+// });
 
-function showPhotos() {
-  var photos = req.responseXML.getElementsByTagName("photo");
+updateOrder(SORT_TYPE, SORT_ORDER);
 
-  for (var i = 0, photo; photo = photos[i]; i++) {
-    var img = document.createElement("image");
-    img.src = constructImageURL(photo);
-    document.body.appendChild(img);
-  }
+
+
+function humanizeTime(millisecs) {
+    time = (((millisecs / 1000) / 60) / 60); // time in hrs
+    return time.toFixed(1) + " hrs"
 }
 
-// See: http://www.flickr.com/services/api/misc.urls.html
-function constructImageURL(photo) {
-  return "http://farm" + photo.getAttribute("farm") +
-      ".static.flickr.com/" + photo.getAttribute("server") +
-      "/" + photo.getAttribute("id") +
-      "_" + photo.getAttribute("secret") +
-      "_s.jpg";
+function updateOrder(sortType, order) {
+    chrome.extension.sendRequest({
+        method: 'sendStats',
+        number: NUMBER_TOP,
+        sortType: sortType,
+        order: order,
+    }, function(response){
+        $('ul.row').remove();
+        urlsTop = response.urlsTop;
+        for(var i = 0; i < urlsTop.length; i++) {
+            el = $(document.createElement('ul'));
+            siteName = $(document.createElement('li')).addClass('siteName').text(urlsTop[i].name);
+            engagedTime = $(document.createElement('li')).addClass('engagedTime').text(humanizeTime(urlsTop[i].engagedTime));
+            idleTime = $(document.createElement('li')).addClass('idleTime').text(humanizeTime(urlsTop[i].idleTime));
+            $(el).append(siteName, engagedTime, idleTime);
+            $('div.table').append(el);
+        }
+    });
 }

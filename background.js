@@ -73,8 +73,11 @@ Array.prototype.where = function(data) {
 
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     if(request.method == 'getOpenUrls') {
-	processUrl(request.url, request.state);
-	sendResponse({success: "yeah!"});
+		processUrl(request.url, request.state);
+		sendResponse({success: "yeah!"});
+    }
+    if(request.method == 'sendStats') {
+    	sendResponse({urlsTop: sendStats(request.number, request.sortType, request.order)});
     }
 });
 
@@ -88,7 +91,7 @@ function processUrl(url, state) {
 	urls = JSON.parse(localStorage.urls);
     else
 	urls = new Array();
-    var idx = urls.where(url);
+    var idx = urls.where(cleanUrl(url));
     if(idx != -1) {
 	urls[idx].totalTime += MSECONDS_REFRESH;
 	if(state == "visible") {
@@ -97,10 +100,39 @@ function processUrl(url, state) {
     }
     else {
 	urls.push({
-	    "name": url,
+	    "name": cleanUrl(url),
 	    "totalTime": 0,
 	    "engagedTime": 0
 	});
     }
     localStorage.urls = JSON.stringify(urls);
 }
+
+function sendStats(number, sortType, order) {
+	urls = JSON.parse(localStorage.urls);
+	urls = urls.sort(dynamicSort(sortType, order)).slice(0, number);
+	for(var i = 0; i < urls.length; i++) {
+		urls[i].idleTime = urls[i].totalTime - urls[i].engagedTime;
+	}
+	return urls;
+}
+
+function dynamicSort(property, order) {
+	if(order == "descending") {
+		return function(a,b) {
+			if(a[property] < b[property])
+				return 1;
+			if(a[property] > b[property])
+				return -1;
+			return 0;
+		}
+	}
+	return function(a,b) {
+		if(a[property] < b[property])
+			return -1;
+		if(a[property] > b[property])
+			return 1;
+		return 0;
+	}
+}
+

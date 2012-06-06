@@ -4,20 +4,43 @@
     <title>Getting Started Extension's Popup</title>
     <style>
       body {
-        min-width:357px;
+        min-width:450px;
         overflow-x:hidden;
+        font-size:.7em;
+        font-family:helvetica, arial, sans-serif;
       }
-
-      img {
-        margin:5px;
-        border:2px solid black;
-        vertical-align:middle;
-        width:75px;
-        height:75px;
+      .table ul {
+        width:450px;
+        float:left;
+        margin:0;
+        padding:0;
+        border:0px solid #C9C9C9;
+      }
+      .table ul li {
+        width:130px;
+        list-style:none;
+        padding:5px 10px; /* left right +60px bc of this */
+        float:left;
+        text-align:center;
+      }
+      .table ul li.siteName {
+        font-weight:bold;
+        background:#333;
+        color:#fff;
       }
     </style>
 
+    <!-- JavaScript and HTML must be in separate files for security. -->
+    <script src="popup.js"></script>
+    <script src="js/jquery-1.7.2.min.js"></script>
   </head>
   <body>
+    <div class="table">
+      <ul id="headerRow">
+        <li class="siteNameHeader">Site Name</li>
+        <li class="engagedTimeHeader">Engaged Time</li>
+        <li class="idleTime">Idle Time</li>
+      </ul>
+    </div>
   </body>
 </html>

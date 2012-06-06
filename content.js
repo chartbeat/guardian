@@ -1,4 +1,4 @@
-MSECONDS_REFRESH = 3000; // 3000 millisecs = 3 secs
+MSECONDS_REFRESH = 1000; // 3000 millisecs = 3 secs
 
 // var i;
 // var idle = false;
@@ -15,4 +15,4 @@ function repeatSend() {
 	state: document.webkitVisibilityState,
     });
 }
-setInterval("repeatSend()", 3000);
+setInterval("repeatSend()", MSECONDS_REFRESH);
