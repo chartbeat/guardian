@@ -17,29 +17,47 @@
         border:0px solid #C9C9C9;
       }
       .table ul li {
+        position:relative;
         width:130px;
         list-style:none;
-        padding:5px 10px; /* left right +60px bc of this */
+        padding:5px 10px; /* top-bottom left-right +60px bc of this */
         float:left;
         text-align:center;
       }
-      .table ul li.siteName {
+      .table ul#headerRow li {
+        padding-right:10px;
+      }
+      .table ul li.site {
         font-weight:bold;
         background:#333;
         color:#fff;
       }
+      .table ul span {
+        position:relative;
+        margin:0;
+        padding:0;
+        float:right;
+      }
+      .table img.up{
+        position:absolute;
+        top:0px;
+      }
+      .table img.down{
+        position:absolute;
+        top:10px;
+      }
     </style>
 
     <!-- JavaScript and HTML must be in separate files for security. -->
-    <script src="popup.js"></script>
     <script src="js/jquery-1.7.2.min.js"></script>
+    <script src="popup.js"></script>
   </head>
   <body>
     <div class="table">
       <ul id="headerRow">
-        <li class="siteNameHeader">Site Name</li>
-        <li class="engagedTimeHeader">Engaged Time</li>
-        <li class="idleTime">Idle Time</li>
+        <li id="name">Site Name<span id="nameArrows"><img src="img/triangleUp.png" class="up" /><img src="img/triangleDown.png" class="down" /></span></li>
+        <li id="engagedTime">Engaged Time<span id="engagedArrows"><!-- <img src="img/triangleUp.png" class="up" /> --><img src="img/triangleDown.png" class="down" /></span></li>
+        <li id="idleTime">Idle Time<span id="idleArrows"><img src="img/triangleUp.png" class="up" /><img src="img/triangleDown.png" class="down" /></span></li>
       </ul>
     </div>
   </body>

@@ -13,6 +13,7 @@ function repeatSend() {
 	method: 'getOpenUrls',
 	url: document.URL,
 	state: document.webkitVisibilityState,
+	msecondsRefresh: MSECONDS_REFRESH,
     });
 }
 setInterval("repeatSend()", MSECONDS_REFRESH);
