@@ -6,43 +6,94 @@
       body {
         min-width:450px;
         overflow-x:hidden;
-        font-size:.7em;
+        font-size:0.7em;
         font-family:helvetica, arial, sans-serif;
       }
-      .table ul {
-        width:450px;
+      p.clear {
+          clear: both;
+          height: 0;  /* only necessary for IE */
+          margin: 0;
+          padding: 0;
+      }
+      ul.navBar {
+        position:relative;
+        font-weight:bold;
+        margin:1em 0 0.5em 0;
+        padding:0 0 0 1em;
+
+      }
+      ul.navBar li {
+        /*float:left;*/
+        position:relative;
+        z-index:1;
+        display:inline;
+        width:120px;
+        list-style:none;
+        padding:0.5em 1em; /* top-bottom left-right +60px bc of this */
+        text-align:center;  
+/*        background:#C9C9C9;*/
+        border:solid black;
+        border-width:1px 1px 0 1px;
+        border-top-left-radius:1em;
+        border-top-right-radius:1em;
+        margin:0 0.5em 0 0;
+      }
+      ul.navBar li a {
+        padding:0 2em;
+        text-decoration:none;
+      }
+      ul.navBar #selected {
+        padding-bottom:0.6em;
+        background:#fff;
+      }
+      /* Do something like this for the currently active tab */
+/*      ul.navBar li#urls {
+        background:#333;
+        color:#fff;
+      }*/
+      div.content {
+        border:1px solid;
+        border-radius:1em;
+        z-index:0;
+        /*background:#C0C0C0;*/
+        position:relative;
+        padding:1em;
+      }
+      div.urls ul {
+        min-width:450px;
         float:left;
         margin:0;
         padding:0;
-        border:0px solid #C9C9C9;
+/*        border:0px solid #C9C9C9;*/
       }
-      .table ul li {
+      div.urls ul li {
         position:relative;
         width:130px;
         list-style:none;
         padding:5px 10px; /* top-bottom left-right +60px bc of this */
         float:left;
         text-align:center;
+        word-wrap:break-word;
       }
-      .table ul#headerRow li {
+      div.urls ul#headerRow li {
         padding-right:10px;
       }
-      .table ul li.site {
+      div.urls ul li.site {
         font-weight:bold;
         background:#333;
-        color:#fff;
+        color:#C9C9C9;
       }
-      .table ul span {
+      div.urls ul span {
         position:relative;
         margin:0;
         padding:0;
         float:right;
       }
-      .table img.up{
+      div.urls img.up{
         position:absolute;
         top:0px;
       }
-      .table img.down{
+      div.urls img.down{
         position:absolute;
         top:10px;
       }
@@ -53,12 +104,34 @@
     <script src="popup.js"></script>
   </head>
   <body>
-    <div class="table">
+    <ul class="navBar">
+      <li class="urls" id="selected">
+        <a href="#">URLS</a>
+      </li>
+      <li class="domains">
+        <a href="#">DOMAINS</a>
+      </li>
+      <li class="time">
+        <a href="#">TIME</a>     
+      </li>
+      <p class="clear" />
+    </ul>
+    <p class="clear" />
+    <div class="urls content">
+      <form id="settings">
+        <formset id="urls"><span>Number of Urls:</span><input type="text" name="numberOfUrls" /></formset>
+        <input type="submit" value="Submit" />
+      </form>
       <ul id="headerRow">
         <li id="name">Site Name<span id="nameArrows"><img src="img/triangleUp.png" class="up" /><img src="img/triangleDown.png" class="down" /></span></li>
         <li id="engagedTime">Engaged Time<span id="engagedArrows"><!-- <img src="img/triangleUp.png" class="up" /> --><img src="img/triangleDown.png" class="down" /></span></li>
         <li id="idleTime">Idle Time<span id="idleArrows"><img src="img/triangleUp.png" class="up" /><img src="img/triangleDown.png" class="down" /></span></li>
       </ul>
+    </div>
+    <div class="domains content">
+      <p>HI!</p>
+    </div>
+    <div class="time content">
     </div>
   </body>
 </html>

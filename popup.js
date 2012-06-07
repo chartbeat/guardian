@@ -1,37 +1,25 @@
+// Currently there is a bug that when you leave the application the state of the app is not saved!
+
+
 NUMBER_TOP = 10;
 SORT_TYPE = "engagedTime";
 SORT_ORDER = "ascending"; // complete hack to get the order to be in the right direction on the load
 
-// chrome.extension.sendRequest({
-//     method: 'sendStats',
-//     number: NUMBER_TOP,
-//     sortType: SORT_TYPE,
-//     order: SORT_ORDER,
-// }, function(response){
-//     urlsTop = response.urlsTop;
-//     for(var i = 0; i < urlsTop.length; i++) {
-//         el = $(document.createElement('ul')).addClass('row');
-//         siteName = $(document.createElement('li')).addClass('siteName').text(urlsTop[i].name);
-//         engagedTime = $(document.createElement('li')).addClass('engagedTime').text(humanizeTime(urlsTop[i].engagedTime));
-//         idleTime = $(document.createElement('li')).addClass('idleTime').text(humanizeTime(urlsTop[i].idleTime));
-//         $(el).append(siteName, engagedTime, idleTime);
-//         $('div.table').append(el);
-//     }
-// });
 
-updateOrder(SORT_TYPE, SORT_ORDER);
-
-
+updateOrder(SORT_TYPE, SORT_ORDER, NUMBER_TOP);
 
 function humanizeTime(millisecs) {
-    time = (((millisecs / 1000) / 60) / 60); // time in hrs
-    return time.toFixed(1) + " hrs"
+    time = ((millisecs / 1000) / 60); // time in min
+    return time.toFixed(1) + " mins"
 }
 
-function updateOrder(sortType, order) {
+function updateOrder(sortType, order, number) {
+    sessionStorage.sortType = sortType;
+    sessionStorage.order = order;
+    sessionStorage.numberTop = number;
     chrome.extension.sendRequest({
         method: 'sendStats',
-        number: NUMBER_TOP,
+        number: number,
         sortType: sortType,
         order: order,
     }, function(response){
@@ -44,9 +32,14 @@ function updateOrder(sortType, order) {
             engagedTime = $(document.createElement('li')).text(humanizeTime(urlsTop[i].engagedTime));
             idleTime = $(document.createElement('li')).text(humanizeTime(urlsTop[i].idleTime));
             $(el).append(siteName, engagedTime, idleTime);
-            $('div.table').append(el);
+            $('div.urls').append(el);
         }
+        $('div.urls').append($(document.createElement('p')).addClass('clear'));
     });
+}
+
+function updateNumberTop(numberTop) {
+    updateOrder(sessionStorage.sortType, sessionStorage.order, numberTop);
 }
 
 function toggle(sortType, currentOrder) {
@@ -56,7 +49,7 @@ function toggle(sortType, currentOrder) {
     else {
         currentOrder = "ascending";
     }
-    updateOrder(sortType, currentOrder);
+    updateOrder(sortType, currentOrder, Number(sessionStorage.numberTop));
 }
 
 jQuery(function($) {
@@ -77,6 +70,35 @@ jQuery(function($) {
         }
         toggle($(this).attr('id'), order);
     });
+
+    $('form#settings').submit(function() {
+        numberTop = $('input[name="numberOfUrls"]').val();
+        if(numberTop == 'all') {
+            numberTop = 10000; // hack
+        }
+        else {
+            numberTop = Number($('input[name="numberOfUrls"]').val());
+        }
+        updateNumberTop(numberTop);
+        return false;
+    });
+
+    $('ul.navBar li').click(function() {
+        $(this).attr('id', 'selected');
+        $('ul.navBar li').not($(this)).removeAttr('id').each(function(index, value) {
+            className = 'div.' + $(value).attr('class');
+            $(className).hide();
+        });
+        className = 'div.' + $(this).attr('class');
+        $(className).show();
+    });
+
+    $(document).ready(function() {
+        $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
+            className = 'div.' + $(value).attr('class');
+            $(className).hide();
+        });        
+    })
 });
 
 function fixOtherArrows(clicked, others) {
@@ -87,3 +109,4 @@ function fixOtherArrows(clicked, others) {
         $(others[i]).children("span").append(up, down);
     }
 }
+

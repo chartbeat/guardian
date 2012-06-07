@@ -20,10 +20,48 @@ Array.prototype.where = function(data) {
     return contains;
 }
 
+Array.prototype.query = function(compare, query) {
+	var result = new Array();
+	for(var i = 0; i < this.length; i++) {
+		var match = true;
+		if(! compare(this[i][query.key], query.value)) {
+			match = false;
+		}
+		if(match) {
+			result.push(this[i]);
+		}
+	}
+	return result;
+}
+
+function inHour(a, b) {
+	a = new Date(a);
+	b = new Date(b);
+	if(a.getHours() == b.getHours()) {
+		return true;
+	}
+	return false;
+}
+
+// Has to be equal to all fields specified
+function equal(a, b) {
+	if(a == b) {
+		return true;
+	}
+	return false;
+}
+
+// Has to be not equal to all fields specified
+function notEqual(a, b) {
+	if(a != b) {
+		return true;
+	}
+	return false;
+}
 
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     if(request.method == 'getOpenUrls') {
-		processUrl(request.url, request.state, request.msecondsRefresh);
+		processUrl(request.data);
 		sendResponse({success: "yeah!"});
     }
     if(request.method == 'sendStats') {
@@ -31,23 +69,32 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     }
 });
 
-function processUrl(url, state, msecondsRefresh) {
+function processUrl(data) {
     if(localStorage.urls) {
 		urls = JSON.parse(localStorage.urls);
 	}
     else {
 		urls = new Array();
 	}
-    var idx = urls.where(cleanUrl(url));
+    var idx = urls.where(cleanUrl(data.url));
     if(idx != -1) {
-			urls[idx].totalTime += msecondsRefresh;
-		if(state == "visible") {
-		    urls[idx].engagedTime += msecondsRefresh;
+		urls[idx].totalTime += data.msecondsRefresh;
+		if(data.status.state == "engaged") {
+		    urls[idx].engagedTime += data.msecondsRefresh;
 		}
+		urls[idx].status.push({
+			"state": data.status.state,
+			"time": data.status.time,
+		});
     }
     else {
 		urls.push({
-		    "name": cleanUrl(url),
+		    "name": cleanUrl(data.url),
+		    "domain": data.domain,
+		    "status": [{
+		    	"state": data.status.state,
+		    	"time": data.status.time,
+		    }],
 		    "totalTime": 0,
 		    "engagedTime": 0
 		});
@@ -60,8 +107,7 @@ function sendStats(number, sortType, order) {
 	for(var i = 0; i < urls.length; i++) {
 		urls[i].idleTime = urls[i].totalTime - urls[i].engagedTime;
 	}	
-	urls = urls.sort(dynamicSort(sortType, order)).slice(0, number);
-	return urls;
+	return urls.sort(dynamicSort(sortType, order)).slice(0, number);
 }
 
 function dynamicSort(property, order) {
