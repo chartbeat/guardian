@@ -96,6 +96,7 @@ jQuery(function($) {
     $(document).ready(function() {
         // hack to get the domains tab
         paintHistogram($('div.domains')[0], 450, 300);
+
         $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
             className = 'div.' + $(value).attr('class');
             $(className).hide();
@@ -114,15 +115,48 @@ function fixOtherArrows(clicked, others) {
 
 function paintHistogram(element, width, height) {
     // hard coded just to make sure is working!
+    start = new Date();
+    start.setHours(9);
+    start.setDate(7);
     chrome.extension.sendRequest({
         method: 'sendHistogramStats',
         type: "hour",
         metric: "totalEngagedTime",
-        start: 12,
-        number: 6,
+        start: start,
+        number: 48,
     }, function(response) {
         console.log(response.info.xTitle);
         console.log(response.info.yTitle);
-        console.log(response.info.data);
+        console.log(response);
+        var data = response.info.data;
+        var arr = new Array();
+        for(var i = 0; i < data.length; i++) {
+            var min = ((data[i].msecs / 1000) / 60);
+            arr.push([new Date(data[i].time).getTime(), min]);
+        }
+        var chart1 = new Highcharts.Chart({
+            chart: {
+                renderTo: 'domainsChart',
+                type: 'column',
+                zoomType: 'x',
+            },
+            title: {
+                text: 'Domains'
+            },
+            xAxis: {
+                type: 'datetime'
+            },
+            yAxis: {
+                title: {
+                    text: 'Engaged Time (min)'
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            series: [{
+                data: arr
+            }]
+        });
     });
 }

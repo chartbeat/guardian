@@ -101,14 +101,15 @@
 
     <!-- JavaScript and HTML must be in separate files for security. -->
     <script src="js/jquery-1.7.2.min.js"></script>
+    <script src="js/highcharts.js"></script>
     <script src="popup.js"></script>
   </head>
   <body>
     <ul class="navBar">
-      <li class="urls" id="selected">
+      <li class="urls">
         <a href="#">URLS</a>
       </li>
-      <li class="domains">
+      <li class="domains" id="selected">
         <a href="#">DOMAINS</a>
       </li>
       <li class="time">
@@ -129,6 +130,7 @@
       </ul>
     </div>
     <div class="domains content">
+      <div id="domainsChart"></div>
     </div>
     <div class="time content">
     </div>

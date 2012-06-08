@@ -50,7 +50,13 @@ Array.prototype.query = function(compare, query) {
 function inHour(a, b) {
 	a = new Date(a);
 	b = new Date(b);
-	if(a.getHours() == b.getHours()) {
+	a.setMilliseconds(0);
+	b.setMilliseconds(0);
+	a.setSeconds(0);
+	b.setSeconds(0);
+	a.setMinutes(0);
+	b.setMinutes(0);
+	if(a.getTime() == b.getTime()) {
 		return true;
 	}
 	return false;
@@ -169,22 +175,31 @@ function createAxisTitle(axis, type, metric) {
 function sendHistogramStats(type, metric, start, number) {
 	var msecondsRefresh = localStorage.msecondsRefresh;
 	var urls = JSON.parse(localStorage.urls);
-	var data = new Array();
+	var data = new Array()
+	start = new Date(start); // start comes as JSON string
+	start.setMinutes(0);
+	start.setSeconds(0);
+	start.setMilliseconds(0);
 	yTitle = createAxisTitle("y", type, metric);
 	xTitle = createAxisTitle("x", type, metric);
 	if(type == "hour" && metric == "totalEngagedTime") {
-		for(var i = 0+start; i < start+number; i++) {
+		for(var i = 0; i < number; i++) {
 			var count = 0;
+			start.addHours(1);
 			for(var j = 0; j < urls.length; j++) {
 				count += urls[j].status
-								.query(inHour, {key:"time", value:(new Date()).setHours(i)})
+								.query(inHour, {key:"time", value:(start)})
 								.query(equal, {key:"state", value:"engaged"}).length;
 			}
+			// start = label, count... = msecs
 			data.push({
-				label: (new Date()).setHours(i),
+				time: new Date(start),
 				msecs: count * msecondsRefresh,
 			});
 		}
+	}
+	if(type == "day" && metric == "totalEngagedTime") {
+		var startDate = start.getDate();
 	}
 	return {
 		yTitle: yTitle,
@@ -193,3 +208,10 @@ function sendHistogramStats(type, metric, start, number) {
 	};
 }
 
+Date.prototype.addHours = function(h) {
+	// if(this.getHours() >= 24 - h) {
+	// 	this.setDate(this.getDate()+1);
+	// }
+    this.setHours(this.getHours()+h);
+    return this;
+}
