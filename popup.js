@@ -5,6 +5,7 @@ NUMBER_TOP = 10;
 SORT_TYPE = "engagedTime";
 SORT_ORDER = "ascending"; // complete hack to get the order to be in the right direction on the load
 
+var chart;
 
 updateOrder(SORT_TYPE, SORT_ORDER, NUMBER_TOP);
 
@@ -95,7 +96,10 @@ jQuery(function($) {
 
     $(document).ready(function() {
         // hack to get the domains tab
-        paintHistogram($('div.domains')[0], 450, 300);
+        start = new Date();
+        start.setHours(9);
+        start.setDate(7);
+        paintHistogram('domainsChart', 'hour', 'totalEngagedTime', start, 7);
 
         $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
             className = 'div.' + $(value).attr('class');
@@ -113,39 +117,68 @@ function fixOtherArrows(clicked, others) {
     }
 }
 
-function paintHistogram(element, width, height) {
+function paintHistogram(elementId, type, metric, start, incraments) {
     // hard coded just to make sure is working!
-    start = new Date();
-    start.setHours(9);
-    start.setDate(7);
     chrome.extension.sendRequest({
         method: 'sendHistogramStats',
-        type: "hour",
-        metric: "totalEngagedTime",
+        type: type,
+        metric: metric,
         start: start,
-        number: 48,
+        number: incraments,
     }, function(response) {
-        console.log(response.info.xTitle);
-        console.log(response.info.yTitle);
         console.log(response);
         var data = response.info.data;
         var arr = new Array();
+        var categories = new Array();
         for(var i = 0; i < data.length; i++) {
+            var subArr = new Array();
+            for(var j = 0; j < data[i].domains.length; j++) {
+                var subMin = ((data[i].domains[j].msecs / 1000) / 60);
+                categories.push(data[i].domains[j].name);
+                subArr.push(subMin);
+            }
             var min = ((data[i].msecs / 1000) / 60);
-            arr.push([new Date(data[i].time).getTime(), min]);
+            if(metric == 'totalEngagedTime') {
+                arr.push({
+                    x: new Date(data[i].time).getTime(),
+                    y: min,
+                    drilldown: {
+                        name: 'domains',
+                        categories: categories,
+                        data: subArr,
+                    },
+                });
+            }
+            else if(metric == 'domainsEngagedTime') {
+                categories.push(data[i].domain);
+                arr.push(min);
+            }
         }
-        var chart1 = new Highcharts.Chart({
+        var xAxis;
+        if(metric == 'domainsEngagedTime') {
+            xAxis = {
+                categories: categories,
+                labels: {
+                    rotation: -45,
+                    align: 'right',
+                },
+            };
+        }
+        else if(metric == 'totalEngagedTime') {
+            xAxis = {
+                type: 'datetime'
+            };
+        }
+        chart = new Highcharts.Chart({
             chart: {
-                renderTo: 'domainsChart',
+                renderTo: elementId,
                 type: 'column',
                 zoomType: 'x',
             },
             title: {
                 text: 'Domains'
             },
-            xAxis: {
-                type: 'datetime'
-            },
+            xAxis: xAxis, 
             yAxis: {
                 title: {
                     text: 'Engaged Time (min)'
@@ -156,7 +189,37 @@ function paintHistogram(element, width, height) {
             },
             series: [{
                 data: arr
-            }]
+            }],
+            // Currently broken!
+            plotOptions: {
+                column: {
+                    cursor: 'pointer',
+                    point: {
+                        events: {
+                            click: function() {
+                                var drilldown = this.drilldown;
+                                if (drilldown) { // drill down
+                                    setChart(drilldown.name, drilldown.categories, drilldown.data, drilldown.color);
+                                } else { // restore
+                                    setChart(name, categories, data);
+                                }
+                            }
+                        }
+                    }
+                }
+            },
         });
     });
 }
+
+function setChart(name, categories, data, color) {
+    console.log(categories);
+    chart.xAxis[0].setCategories(categories);
+    chart.series[0].remove();
+    chart.addSeries({
+        name: name,
+        data: data,
+        color: color || 'white'
+    });
+}
+

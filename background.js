@@ -62,6 +62,23 @@ function inHour(a, b) {
 	return false;
 }
 
+function inDay(a, b) {
+	a = new Date(a);
+	b = new Date(b);
+	a.setMilliseconds(0);
+	b.setMilliseconds(0);
+	a.setSeconds(0);
+	b.setSeconds(0);
+	a.setMinutes(0);
+	b.setMinutes(0);
+	a.setHours(0);
+	b.setHours(0);
+	if(a.getTime() == b.getTime()) {
+		return true;
+	}
+	return false;
+}
+
 // Has to be equal to all fields specified
 function equal(a, b) {
 	if(a == b) {
@@ -172,34 +189,99 @@ function createAxisTitle(axis, type, metric) {
 	return title;
 }
 
+//This is such shit --> what happens when I'm being super lazy
 function sendHistogramStats(type, metric, start, number) {
 	var msecondsRefresh = localStorage.msecondsRefresh;
 	var urls = JSON.parse(localStorage.urls);
-	var data = new Array()
+	var data = new Array();
 	start = new Date(start); // start comes as JSON string
 	start.setMinutes(0);
 	start.setSeconds(0);
 	start.setMilliseconds(0);
 	yTitle = createAxisTitle("y", type, metric);
 	xTitle = createAxisTitle("x", type, metric);
-	if(type == "hour" && metric == "totalEngagedTime") {
+	if(metric == "totalEngagedTime") {
 		for(var i = 0; i < number; i++) {
 			var count = 0;
-			start.addHours(1);
+			var domains = new Array();
 			for(var j = 0; j < urls.length; j++) {
-				count += urls[j].status
-								.query(inHour, {key:"time", value:(start)})
-								.query(equal, {key:"state", value:"engaged"}).length;
+				if(type == "hour") {
+					count += urls[j].status
+									.query(inHour, {key:"time", value:(start)})
+									.query(equal, {key:"state", value:"engaged"}).length;
+					var idx = domains.where(urls[j].domain);
+					if(idx != -1) {
+						domains[idx].msecs += msecondsRefresh;
+					}
+					else {
+						domains.push({
+							name: urls[j].domain,
+							msecs: msecondsRefresh,
+						});
+					}
+				}
+				else if(type == "day") {
+					count += urls[j].status
+									.query(inDay, {key:"time", value:(start)})
+									.query(equal, {key:"state", value:"engaged"}).length;
+					var idx = domains.where(urls[j].domain);
+					if(idx != -1) {
+						domains[idx].msecs += msecondsRefresh;
+					}
+					else {
+						domains.push({
+							name: urls[j].domain,
+							msecs: msecondsRefresh,
+						});
+					}													
+				}
 			}
 			// start = label, count... = msecs
 			data.push({
 				time: new Date(start),
 				msecs: count * msecondsRefresh,
+				domains: domains,
 			});
+			if(type == "hour") {
+				start.addHours(1);
+			}
+			else if(type == "day") {
+				start.addDays(1);
+			}			
 		}
 	}
-	if(type == "day" && metric == "totalEngagedTime") {
-		var startDate = start.getDate();
+	else if(metric == "domainsEngagedTime") {
+		for(var i = 0; i < number; i++) {
+			var count = 0;
+			if(type == "hour") {
+				start.addHours(1);
+			}
+			else if(type == "day") {
+				start.addDays(1);
+			}
+			for(var j = 0; j < urls.length; j++) {
+				if(type == "hour") {
+					count += urls[j].status
+									.query(inHour, {key:"time", value:(start)})
+									.query(equal, {key:"state", value:"engaged"}).length;
+				}
+				else if(type == "day") {
+					count += urls[j].status
+									.query(inDay, {key:"time", value:(start)})
+									.query(equal, {key:"state", value:"engaged"}).length;					
+				}
+				var idx = data.where(urls[j].domain);
+				if(idx != -1) {
+					data[idx].msecs += (count * msecondsRefresh);
+				}
+				else {
+					data.push({
+						domain: urls[j].domain,
+						msecs: count * msecondsRefresh,
+					});
+				}		
+			}
+		}		
 	}
 	return {
 		yTitle: yTitle,
@@ -209,9 +291,12 @@ function sendHistogramStats(type, metric, start, number) {
 }
 
 Date.prototype.addHours = function(h) {
-	// if(this.getHours() >= 24 - h) {
-	// 	this.setDate(this.getDate()+1);
-	// }
     this.setHours(this.getHours()+h);
     return this;
 }
+
+Date.prototype.addDays = function(d) {
+    this.setDate(this.getDate()+d);
+    return this;
+}
+
