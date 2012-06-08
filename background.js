@@ -1,5 +1,18 @@
 // hello
 
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+    if(request.method == 'getOpenUrls') {
+		processUrl(request.data);
+		sendResponse({success: "yeah!"});
+    }
+    if(request.method == 'sendUrlStats') {
+    	sendResponse({urlsTop: sendUrlStats(request.number, request.sortType, request.order)});
+    }
+    if(request.method == 'sendHistogramStats') {
+    	sendResponse({info: sendHistogramStats(request.type, request.metric, request.start, request.number)});
+    }
+});
+
 // Gets rid of query parameters and http(s) from urls
 function cleanUrl(url) {
     url = url.split("://")[1];
@@ -59,17 +72,8 @@ function notEqual(a, b) {
 	return false;
 }
 
-chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-    if(request.method == 'getOpenUrls') {
-		processUrl(request.data);
-		sendResponse({success: "yeah!"});
-    }
-    if(request.method == 'sendStats') {
-    	sendResponse({urlsTop: sendStats(request.number, request.sortType, request.order)});
-    }
-});
-
 function processUrl(data) {
+	localStorage.msecondsRefresh = data.msecondsRefresh;
     if(localStorage.urls) {
 		urls = JSON.parse(localStorage.urls);
 	}
@@ -83,26 +87,26 @@ function processUrl(data) {
 		    urls[idx].engagedTime += data.msecondsRefresh;
 		}
 		urls[idx].status.push({
-			"state": data.status.state,
-			"time": data.status.time,
+			state: data.status.state,
+			time: data.status.time,
 		});
     }
     else {
 		urls.push({
-		    "name": cleanUrl(data.url),
-		    "domain": data.domain,
-		    "status": [{
-		    	"state": data.status.state,
-		    	"time": data.status.time,
+		    name: cleanUrl(data.url),
+		    domain: data.domain,
+		    status: [{
+		    	state: data.status.state,
+		    	time: data.status.time,
 		    }],
-		    "totalTime": 0,
-		    "engagedTime": 0
+		    totalTime: 0,
+		    engagedTime: 0
 		});
     }
     localStorage.urls = JSON.stringify(urls);
 }
 
-function sendStats(number, sortType, order) {
+function sendUrlStats(number, sortType, order) {
 	urls = JSON.parse(localStorage.urls);
 	for(var i = 0; i < urls.length; i++) {
 		urls[i].idleTime = urls[i].totalTime - urls[i].engagedTime;
@@ -127,5 +131,65 @@ function dynamicSort(property, order) {
 			return -1;
 		return 0;
 	}
+}
+
+function createAxisTitle(axis, type, metric) {
+	var title =  "";
+	if(axis == "y") {
+		if(metric == "totalEngagedTime") {
+			title += "Engaged Time ";
+		}
+		else if(metric == "somethingElse") {
+			title += "That thing ";
+		}
+		if(type == "hour") {
+			title += "(min)";
+		}
+		else if(type == "day") {
+			title += "(hr)";
+		}
+		else if(type == "week") {
+			title += "(day)"
+		}
+		else if(type == "month") {
+			title += "(week)";
+		}
+	}
+	else if(axis == "x") {
+		if(metric == "totalEngagedTime") {
+			title += type.charAt(0).toUpperCase() + type.slice(1);
+		}
+		else if(metric == "someThingElse") {
+			title += "That thing";
+		}
+	}
+	return title;
+}
+
+function sendHistogramStats(type, metric, start, number) {
+	var msecondsRefresh = localStorage.msecondsRefresh;
+	var urls = JSON.parse(localStorage.urls);
+	var data = new Array();
+	yTitle = createAxisTitle("y", type, metric);
+	xTitle = createAxisTitle("x", type, metric);
+	if(type == "hour" && metric == "totalEngagedTime") {
+		for(var i = 0+start; i < start+number; i++) {
+			var count = 0;
+			for(var j = 0; j < urls.length; j++) {
+				count += urls[j].status
+								.query(inHour, {key:"time", value:(new Date()).setHours(i)})
+								.query(equal, {key:"state", value:"engaged"}).length;
+			}
+			data.push({
+				label: (new Date()).setHours(i),
+				msecs: count * msecondsRefresh,
+			});
+		}
+	}
+	return {
+		yTitle: yTitle,
+		xTitle: xTitle,
+		data: data,
+	};
 }
 

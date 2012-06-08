@@ -18,7 +18,7 @@ function updateOrder(sortType, order, number) {
     sessionStorage.order = order;
     sessionStorage.numberTop = number;
     chrome.extension.sendRequest({
-        method: 'sendStats',
+        method: 'sendUrlStats',
         number: number,
         sortType: sortType,
         order: order,
@@ -94,11 +94,13 @@ jQuery(function($) {
     });
 
     $(document).ready(function() {
+        // hack to get the domains tab
+        paintHistogram($('div.domains')[0], 450, 300);
         $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
             className = 'div.' + $(value).attr('class');
             $(className).hide();
-        });        
-    })
+        });
+    });
 });
 
 function fixOtherArrows(clicked, others) {
@@ -110,3 +112,17 @@ function fixOtherArrows(clicked, others) {
     }
 }
 
+function paintHistogram(element, width, height) {
+    // hard coded just to make sure is working!
+    chrome.extension.sendRequest({
+        method: 'sendHistogramStats',
+        type: "hour",
+        metric: "totalEngagedTime",
+        start: 12,
+        number: 6,
+    }, function(response) {
+        console.log(response.info.xTitle);
+        console.log(response.info.yTitle);
+        console.log(response.info.data);
+    });
+}
