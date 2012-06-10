@@ -191,7 +191,7 @@ function createAxisTitle(axis, type, metric) {
 
 //This is such shit --> what happens when I'm being super lazy
 function sendHistogramStats(type, metric, start, number) {
-	var msecondsRefresh = localStorage.msecondsRefresh;
+	var msecondsRefresh = Number(localStorage.msecondsRefresh);
 	var urls = JSON.parse(localStorage.urls);
 	var data = new Array();
 	start = new Date(start); // start comes as JSON string
@@ -206,34 +206,40 @@ function sendHistogramStats(type, metric, start, number) {
 			var domains = new Array();
 			for(var j = 0; j < urls.length; j++) {
 				if(type == "hour") {
-					count += urls[j].status
-									.query(inHour, {key:"time", value:(start)})
-									.query(equal, {key:"state", value:"engaged"}).length;
-					var idx = domains.where(urls[j].domain);
-					if(idx != -1) {
-						domains[idx].msecs += msecondsRefresh;
-					}
-					else {
-						domains.push({
-							name: urls[j].domain,
-							msecs: msecondsRefresh,
-						});
+				    res = urls[j].status
+								.query(inHour, {key:"time", value:(start)})
+								.query(equal, {key:"state", value:"engaged"});
+					count += res.length;
+					if(res.length > 0) {
+					    var idx = domains.where(urls[j].domain);
+    					if(idx != -1) {
+    						domains[idx].msecs += msecondsRefresh;
+    					}
+    					else {
+    						domains.push({
+    							name: urls[j].domain,
+    							msecs: msecondsRefresh,
+    						});
+    					}
 					}
 				}
 				else if(type == "day") {
-					count += urls[j].status
-									.query(inDay, {key:"time", value:(start)})
-									.query(equal, {key:"state", value:"engaged"}).length;
-					var idx = domains.where(urls[j].domain);
-					if(idx != -1) {
-						domains[idx].msecs += msecondsRefresh;
+				    res = urls[j].status
+								.query(inDay, {key:"time", value:(start)})
+								.query(equal, {key:"state", value:"engaged"});
+					count += res.length;
+					if(res.length > 0) {
+					    var idx = domains.where(urls[j].domain);
+    					if(idx != -1) {
+    						domains[idx].msecs += msecondsRefresh;
+    					}
+    					else {
+    						domains.push({
+    							name: urls[j].domain,
+    							msecs: msecondsRefresh,
+    						});
+    					}
 					}
-					else {
-						domains.push({
-							name: urls[j].domain,
-							msecs: msecondsRefresh,
-						});
-					}													
 				}
 			}
 			// start = label, count... = msecs
@@ -283,6 +289,7 @@ function sendHistogramStats(type, metric, start, number) {
 			}
 		}		
 	}
+	console.log(data);
 	return {
 		yTitle: yTitle,
 		xTitle: xTitle,

@@ -97,9 +97,9 @@ jQuery(function($) {
     $(document).ready(function() {
         // hack to get the domains tab
         start = new Date();
-        start.setHours(9);
-        start.setDate(7);
-        paintHistogram('domainsChart', 'hour', 'totalEngagedTime', start, 7);
+        start.setHours(13);
+        start.setDate(10);
+        paintHistogram('domainsChart', 'day', 'totalEngagedTime', start, 3);
 
         $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
             className = 'div.' + $(value).attr('class');
@@ -117,6 +117,7 @@ function fixOtherArrows(clicked, others) {
     }
 }
 
+// bug with any incrament > 1
 function paintHistogram(elementId, type, metric, start, incraments) {
     // hard coded just to make sure is working!
     chrome.extension.sendRequest({
@@ -126,16 +127,18 @@ function paintHistogram(elementId, type, metric, start, incraments) {
         start: start,
         number: incraments,
     }, function(response) {
-        console.log(response);
         var data = response.info.data;
+        console.log(data);
         var arr = new Array();
-        var categories = new Array();
         for(var i = 0; i < data.length; i++) {
+            var categories = new Array();
             var subArr = new Array();
             for(var j = 0; j < data[i].domains.length; j++) {
                 var subMin = ((data[i].domains[j].msecs / 1000) / 60);
-                categories.push(data[i].domains[j].name);
-                subArr.push(subMin);
+                if(subMin > 0) {
+                    categories.push(data[i].domains[j].name);
+                    subArr.push(subMin);
+                }
             }
             var min = ((data[i].msecs / 1000) / 60);
             if(metric == 'totalEngagedTime') {
@@ -166,31 +169,41 @@ function paintHistogram(elementId, type, metric, start, incraments) {
         }
         else if(metric == 'totalEngagedTime') {
             xAxis = {
-                type: 'datetime'
+                type: 'datetime',
+                labels: {
+                    rotation: -45,
+                    align: 'right',
+                },
             };
         }
+        function setChart(name, categories, data, color) {
+            chart.series[0].remove();
+            chart.xAxis[0].setCategories(categories);
+            chart.addSeries({
+                name: name,
+                data: data,
+                color: color,
+            });
+        }
+        
+        var chart;
         chart = new Highcharts.Chart({
             chart: {
                 renderTo: elementId,
-                type: 'column',
-                zoomType: 'x',
+                type: 'column'
             },
             title: {
-                text: 'Domains'
+                text: 'Engagement'
             },
-            xAxis: xAxis, 
+            subtitle: {
+                text: 'Click the columns to view domains. Click again to view total engagement.'
+            },
+            xAxis: xAxis,
             yAxis: {
                 title: {
                     text: 'Engaged Time (min)'
                 }
             },
-            legend: {
-                enabled: false
-            },
-            series: [{
-                data: arr
-            }],
-            // Currently broken!
             plotOptions: {
                 column: {
                     cursor: 'pointer',
@@ -205,21 +218,55 @@ function paintHistogram(elementId, type, metric, start, incraments) {
                                 }
                             }
                         }
-                    }
+                    },
+                    // dataLabels: {
+                    //     enabled: true,
+                    //     // color: colors[0],
+                    //     style: {
+                    //         fontWeight: 'bold'
+                    //     },
+                    //     formatter: function() {
+                    //         return this.y +'%';
+                    //     }
+                    // }
                 }
+            },
+            tooltip: {
+                formatter: function() {
+                    var point = this.point,
+                        s = this.x +':<b>'+ this.y +' minutes engaged</b><br/>';
+                    if (point.drilldown) {
+                        s += 'Click to view '+ point.category +' domains';
+                    } else {
+                        s += 'Click to return to total engagement';
+                    }
+                    return s;
+                }
+            },
+            series: [{
+                name: name,
+                data: arr,
+                // color: 'white'
+            }],
+            exporting: {
+                enabled: false
+            },
+            legend: {
+                enabled: false
             },
         });
     });
 }
 
-function setChart(name, categories, data, color) {
-    console.log(categories);
-    chart.xAxis[0].setCategories(categories);
-    chart.series[0].remove();
-    chart.addSeries({
-        name: name,
-        data: data,
-        color: color || 'white'
-    });
-}
+// function setChart(name, categories, data, color) {
+//     console.log(categories);
+//     chart.xAxis.
+//     chart.xAxis[0].setCategories(categories);
+//     chart.series[0].remove();
+//     chart.addSeries({
+//         name: name,
+//         data: data,
+//         color: color || '#fff'
+//     });
+// }
 
