@@ -100,7 +100,9 @@
     </style>
 
     <!-- JavaScript and HTML must be in separate files for security. -->
+    <link rel="stylesheet" media="screen" type="text/css" href="datepicker/css/datepicker.css" />
     <script src="js/jquery-1.7.2.min.js"></script>
+    <script src="datepicker/js/datepicker.js"></script>
     <script src="js/highcharts.js"></script>
     <script src="popup.js"></script>
   </head>
@@ -137,6 +139,9 @@
             <option value="hour">Hours</option>
             <option value="day">Days</option>
           </select>
+        </formset>
+        <formset>
+          <div id="date"></div>
         </formset>
       </form>
       <div id="domainsChart"></div>
