@@ -11,6 +11,10 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     if(request.method == 'sendHistogramStats') {
         sendResponse({info: sendHistogramStats(request.type, request.metric, request.start, request.end)});
     }
+    if(request.method == 'loadFakeData') {
+	loadFakeData();
+        sendResponse({success: "yeah!"});
+    }
 });
 
 // Gets rid of query parameters and http(s) from urls
@@ -293,12 +297,18 @@ function sendHistogramStats(type, metric, start, end) {
     //         }
     //     }       
     // }
-    console.log(data);
+    // console.log(data);
     return {
         yTitle: yTitle,
         xTitle: xTitle,
         data: data,
     };
+}
+
+function loadFakeData() {
+    // console.log(JSON.parse(fakeDataLoad()));
+    // localStorage.urlsOld = localStorage.urls;
+    localStorage.urls = fakeDataLoad();
 }
 
 Date.prototype.addHours = function(h) {

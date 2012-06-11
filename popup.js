@@ -60,6 +60,9 @@ function toggle(sortType, currentOrder) {
 }
 
 jQuery(function($) {
+    start = (new Date()).toNumDateString();
+    end = (new Date(start)).addDays(1).toNumDateString();
+
     $('ul#headerRow li').click(function() {
         if($(this).children("span").children(".down").length && ! $(this).children("span").children(".up").length) {
             order = "ascending";
@@ -100,7 +103,7 @@ jQuery(function($) {
         $(className).show();
     });
     
-    $('div.domains').change(function() {
+    $('div.domains form').change(function() {
         var measure = $('select#measure option:selected').val();
         start = $('div#date #from').val();
         end = $('div#date #to').val();
@@ -113,6 +116,14 @@ jQuery(function($) {
     //     end = $('div#date #to').val();
     //     paintHistogram('domainsChart', measure, 'totalEngagedTime', start, end);
     // });
+    $('div.domains button#fakeData').click(function() {
+	chrome.extension.sendRequest({
+	    method: 'loadFakeData',
+	}, function(response) {
+    	    console.log(response);
+	});
+	// return false;
+    });
 
     $(document).ready(function() {
         var measure = $('select#measure option:selected').val();
@@ -132,8 +143,6 @@ jQuery(function($) {
         //         $('div#date #from').datepicker('option', 'maxDate', selectedDate);
         //     }
         // });
-        start = (new Date()).toNumDateString();
-        end = (new Date(start)).addDays(1).toNumDateString();
         $('div#date #from').val(start);
         $('div#date #to').val(end);
         
@@ -166,7 +175,7 @@ function paintHistogram(elementId, type, metric, start, end) {
         end: end,
     }, function(response) {
         var rData = response.info.data;
-        console.log(rData);
+        // console.log(rData);
         var colors = Highcharts.getOptions().colors;
         var data = new Array();
         for(var i = 0; i < rData.length; i++) {
