@@ -60,8 +60,8 @@ function toggle(sortType, currentOrder) {
 }
 
 jQuery(function($) {
-    start = (new Date()).toNumDateString();
-    end = (new Date(start)).addDays(1).toNumDateString();
+    start = (new Date()).addDays(-1).toNumDateString();
+    end = (new Date(start)).addDays(2).toNumDateString();
 
     $('ul#headerRow li').click(function() {
         if($(this).children("span").children(".down").length && ! $(this).children("span").children(".up").length) {

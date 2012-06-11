@@ -134,11 +134,13 @@ function processUrl(data) {
 }
 
 function sendUrlStats(number, sortType, order) {
-    urls = JSON.parse(localStorage.urls);
-    for(var i = 0; i < urls.length; i++) {
-        urls[i].idleTime = urls[i].totalTime - urls[i].engagedTime;
-    }   
-    return urls.sort(dynamicSort(sortType, order)).slice(0, number);
+    if(localStorage.urls) {
+	urls = JSON.parse(localStorage.urls);
+	for(var i = 0; i < urls.length; i++) {
+            urls[i].idleTime = urls[i].totalTime - urls[i].engagedTime;
+	}   
+	return urls.sort(dynamicSort(sortType, order)).slice(0, number);
+    }
 }
 
 function dynamicSort(property, order) {
@@ -305,10 +307,12 @@ function sendHistogramStats(type, metric, start, end) {
     };
 }
 
+// bug that this only works if there was something already in localStorage.urls
 function loadFakeData() {
     // console.log(JSON.parse(fakeDataLoad()));
     // localStorage.urlsOld = localStorage.urls;
     localStorage.urls = fakeDataLoad();
+    console.log("load success");
 }
 
 Date.prototype.addHours = function(h) {
