@@ -1,8 +1,8 @@
 {
-  "name": "My First Extension",
+  "name": "Guardian",
   "version": "1.0",
   "manifest_version": 2,
-  "description": "The first extension that I made.",
+  "description": "Who guards the guardians?",
   "browser_action": {
     "default_icon": "img/icon.png",
     "default_popup": "popup.html"

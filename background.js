@@ -9,7 +9,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
         sendResponse({urlsTop: sendUrlStats(request.number, request.sortType, request.order)});
     }
     if(request.method == 'sendHistogramStats') {
-        sendResponse({info: sendHistogramStats(request.type, request.metric, request.start, request.number)});
+        sendResponse({info: sendHistogramStats(request.type, request.metric, request.start, request.end)});
     }
 });
 
@@ -190,7 +190,7 @@ function createAxisTitle(axis, type, metric) {
 }
 
 //This is such shit --> what happens when I'm being super lazy
-function sendHistogramStats(type, metric, start, number) {
+function sendHistogramStats(type, metric, start, end) {
     var msecondsRefresh = Number(localStorage.msecondsRefresh);
     var urls = JSON.parse(localStorage.urls);
     var data = new Array();
@@ -198,10 +198,14 @@ function sendHistogramStats(type, metric, start, number) {
     start.setMinutes(0);
     start.setSeconds(0);
     start.setMilliseconds(0);
+    end = new Date(end);
+    end.setMinutes(0);
+    end.setSeconds(0);
+    end.setMilliseconds(0);
     yTitle = createAxisTitle("y", type, metric);
     xTitle = createAxisTitle("x", type, metric);
     if(metric == "totalEngagedTime") {
-        for(var i = 0; i < number; i++) {
+        while(start - end <= 0){
             var count = 0;
             var domains = new Array();
             for(var j = 0; j < urls.length; j++) {
@@ -242,7 +246,7 @@ function sendHistogramStats(type, metric, start, number) {
                     }
                 }
             }
-            // start = label, count... = msecs
+            domains.sort(function(a,b) {return -(a.msecs-b.msecs);});
             data.push({
                 time: new Date(start),
                 msecs: count * msecondsRefresh,
@@ -256,39 +260,39 @@ function sendHistogramStats(type, metric, start, number) {
             }           
         }
     }
-    else if(metric == "domainsEngagedTime") {
-        for(var i = 0; i < number; i++) {
-            var count = 0;
-            if(type == "hour") {
-                start.addHours(1);
-            }
-            else if(type == "day") {
-                start.addDays(1);
-            }
-            for(var j = 0; j < urls.length; j++) {
-                if(type == "hour") {
-                    count += urls[j].status
-                                    .query(inHour, {key:"time", value:(start)})
-                                    .query(equal, {key:"state", value:"engaged"}).length;
-                }
-                else if(type == "day") {
-                    count += urls[j].status
-                                    .query(inDay, {key:"time", value:(start)})
-                                    .query(equal, {key:"state", value:"engaged"}).length;                   
-                }
-                var idx = data.where(urls[j].domain);
-                if(idx != -1) {
-                    data[idx].msecs += (count * msecondsRefresh);
-                }
-                else {
-                    data.push({
-                        domain: urls[j].domain,
-                        msecs: count * msecondsRefresh,
-                    });
-                }       
-            }
-        }       
-    }
+    // else if(metric == "domainsEngagedTime") {
+    //     for(var i = 0; i < number; i++) {
+    //         var count = 0;
+    //         if(type == "hour") {
+    //             start.addHours(1);
+    //         }
+    //         else if(type == "day") {
+    //             start.addDays(1);
+    //         }
+    //         for(var j = 0; j < urls.length; j++) {
+    //             if(type == "hour") {
+    //                 count += urls[j].status
+    //                                 .query(inHour, {key:"time", value:(start)})
+    //                                 .query(equal, {key:"state", value:"engaged"}).length;
+    //             }
+    //             else if(type == "day") {
+    //                 count += urls[j].status
+    //                                 .query(inDay, {key:"time", value:(start)})
+    //                                 .query(equal, {key:"state", value:"engaged"}).length;                   
+    //             }
+    //             var idx = data.where(urls[j].domain);
+    //             if(idx != -1) {
+    //                 data[idx].msecs += (count * msecondsRefresh);
+    //             }
+    //             else {
+    //                 data.push({
+    //                     domain: urls[j].domain,
+    //                     msecs: count * msecondsRefresh,
+    //                 });
+    //             }       
+    //         }
+    //     }       
+    // }
     console.log(data);
     return {
         yTitle: yTitle,

@@ -7,6 +7,12 @@ SORT_ORDER = "ascending"; // complete hack to get the order to be in the right d
 
 var chart;
 
+Highcharts.setOptions({
+    global: {
+        useUTC: false
+    }
+});
+
 updateOrder(SORT_TYPE, SORT_ORDER, NUMBER_TOP);
 
 function humanizeTime(millisecs) {
@@ -94,29 +100,48 @@ jQuery(function($) {
         $(className).show();
     });
     
-    $('div.domains select#measure').change(function() {
+    $('div.domains').change(function() {
         var measure = $('select#measure option:selected').val();
-        paintHistogram('domainsChart', measure, 'totalEngagedTime', start, 7);
+        start = $('div#date #from').val();
+        end = $('div#date #to').val();
+        paintHistogram('domainsChart', measure, 'totalEngagedTime', start, end);
     });
+    
+    // $('div.domains div#date').change(function() {
+    //     var measure = $('select#measure option:selected').val();
+    //     start = $('div#date #from').val();
+    //     end = $('div#date #to').val();
+    //     paintHistogram('domainsChart', measure, 'totalEngagedTime', start, end);
+    // });
 
     $(document).ready(function() {
-        // hack to get the domains tab
-        start = new Date();
-        start.setHours(13);
-        start.setDate(10);
-        paintHistogram('domainsChart', 'hour', 'totalEngagedTime', start, 7);
+        var measure = $('select#measure option:selected').val();
+        // $('div#date #from').datepicker({
+        //     defaultDate: "+0",
+        //     changeMonth: true,
+        //     numberOfMonths: 1,
+        //     onSelect: function(selectedDate) {
+        //         $('div#date #to').datepicker('option', 'minDate', selectedDate);
+        //     }
+        // });
+        // $('div#date #to').datepicker({
+        //     defaultDate: "+0",
+        //     changeMonth: true,
+        //     numberOfMonths: 1,
+        //     onSelect: function(selectedDate) {
+        //         $('div#date #from').datepicker('option', 'maxDate', selectedDate);
+        //     }
+        // });
+        start = (new Date()).toNumDateString();
+        end = (new Date(start)).addDays(1).toNumDateString();
+        $('div#date #from').val(start);
+        $('div#date #to').val(end);
+        
+        paintHistogram('domainsChart', measure, 'totalEngagedTime', start, end);
 
         $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
             className = 'div.' + $(value).attr('class');
             $(className).hide();
-        });
-        
-        $('#date').DatePicker({
-        	flat: true,
-        	date: '2008-07-31',
-        	current: '2008-07-31',
-        	calendars: 1,
-        	starts: 1
         });
     });
 });
@@ -131,17 +156,17 @@ function fixOtherArrows(clicked, others) {
 }
 
 // bug with any incrament > 1
-function paintHistogram(elementId, type, metric, start, incraments) {
+function paintHistogram(elementId, type, metric, start, end) {
     // hard coded just to make sure is working!
     chrome.extension.sendRequest({
         method: 'sendHistogramStats',
         type: type,
         metric: metric,
         start: start,
-        number: incraments,
+        end: end,
     }, function(response) {
         var rData = response.info.data;
-        // console.log(data);
+        console.log(rData);
         var colors = Highcharts.getOptions().colors;
         var data = new Array();
         for(var i = 0; i < rData.length; i++) {
@@ -202,7 +227,6 @@ function paintHistogram(elementId, type, metric, start, incraments) {
             });
         }
         
-        var chart;
         chart = new Highcharts.Chart({
             chart: {
                 renderTo: elementId,
@@ -253,9 +277,9 @@ function paintHistogram(elementId, type, metric, start, incraments) {
             tooltip: {
                 formatter: function() {
                     var point = this.point,
-                        s = this.x +':<b>'+ this.y +' minutes engaged</b><br/>';
+                        s = '<b>'+ this.y +' minutes engaged</b><br/>';
                     if (point.drilldown) {
-                        s += 'Click to view '+ point.category +' domains';
+                        s += 'Click to view engagement by domains';
                     } else {
                         s += 'Click to return to total engagement';
                     }
@@ -273,19 +297,24 @@ function paintHistogram(elementId, type, metric, start, incraments) {
             legend: {
                 enabled: false
             },
+            credits: {
+                enabled: false
+            },
         });
     });
 }
 
-// function setChart(name, categories, data, color) {
-//     console.log(categories);
-//     chart.xAxis.
-//     chart.xAxis[0].setCategories(categories);
-//     chart.series[0].remove();
-//     chart.addSeries({
-//         name: name,
-//         data: data,
-//         color: color || '#fff'
-//     });
-// }
+Date.prototype.toNumDateString = function() {
+    return (this.getMonth()+1) + '/' + this.getDate() + '/' + this.getFullYear();
+}
+
+Date.prototype.addHours = function(h) {
+    this.setHours(this.getHours()+h);
+    return this;
+}
+
+Date.prototype.addDays = function(d) {
+    this.setDate(this.getDate()+d);
+    return this;
+}
 

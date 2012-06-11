@@ -100,26 +100,46 @@
     </style>
 
     <!-- JavaScript and HTML must be in separate files for security. -->
-    <link rel="stylesheet" media="screen" type="text/css" href="datepicker/css/datepicker.css" />
+    <link rel="stylesheet" media="screen" type="text/css" href="css/ui-lightness/jquery-ui-1.8.21.custom.css" />
     <script src="js/jquery-1.7.2.min.js"></script>
-    <script src="datepicker/js/datepicker.js"></script>
+    <script src="js/jquery-ui-1.8.21.custom.min.js"></script>
     <script src="js/highcharts.js"></script>
     <script src="popup.js"></script>
   </head>
   <body>
     <ul class="navBar">
-      <li class="urls">
-        <a href="#">URLS</a>
-      </li>
       <li class="domains" id="selected">
         <a href="#">DOMAINS</a>
       </li>
-      <li class="time">
-        <a href="#">TIME</a>     
+      <li class="urls">
+        <a href="#">URLS</a>
       </li>
+      <!-- <li class="time">
+        <a href="#">TIME</a>     
+      </li> -->
       <p class="clear" />
     </ul>
     <p class="clear" />
+    <div class="domains content">
+      <form id="settings">
+        <formset>
+          <span>Hours or Days?</span>
+          <select id="measure">
+            <option value="hour">Hours</option>
+            <option value="day">Days</option>
+          </select>
+        </formset>
+        <formset>
+          <div id="date">
+            <label for="from">From</label>
+            <input type="text" id="from" name="from"/>
+            <label for="to">to</label>
+            <input type="text" id="to" name="to"/>
+          </div>
+        </formset>
+      </form>
+      <div id="domainsChart"></div>
+    </div>
     <div class="urls content">
       <form id="settings">
         <formset id="urls"><span>Number of Urls:</span><input type="text" name="numberOfUrls" /></formset>
@@ -131,23 +151,8 @@
         <li id="idleTime">Idle Time<span id="idleArrows"><img src="img/triangleUp.png" class="up" /><img src="img/triangleDown.png" class="down" /></span></li>
       </ul>
     </div>
-    <div class="domains content">
-      <form id="settings">
-        <formset>
-          <span>Hours or Days?</span>
-          <select id="measure">
-            <option value="hour">Hours</option>
-            <option value="day">Days</option>
-          </select>
-        </formset>
-        <formset>
-          <div id="date"></div>
-        </formset>
-      </form>
-      <div id="domainsChart"></div>
-    </div>
-    <div class="time content">
+    <!-- <div class="time content">
       <div id="timeChart"></div>
-    </div>
+    </div> -->
   </body>
 </html>
