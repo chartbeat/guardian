@@ -22,6 +22,7 @@ function repeatSend() {
 	if(tracker.isActive()) {
 		state = "engaged";
 	}
+	console.log(state);
     chrome.extension.sendRequest({
 		method: 'getOpenUrls',
 		data: {

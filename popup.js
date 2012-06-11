@@ -72,7 +72,7 @@ jQuery(function($) {
         toggle($(this).attr('id'), order);
     });
 
-    $('form#settings').submit(function() {
+    $('div.urls form#settings').submit(function() {
         numberTop = $('input[name="numberOfUrls"]').val();
         if(numberTop == 'all') {
             numberTop = 10000; // hack
@@ -93,13 +93,18 @@ jQuery(function($) {
         className = 'div.' + $(this).attr('class');
         $(className).show();
     });
+    
+    $('div.domains select#measure').change(function() {
+        var measure = $('select#measure option:selected').val();
+        paintHistogram('domainsChart', measure, 'totalEngagedTime', start, 7);
+    });
 
     $(document).ready(function() {
         // hack to get the domains tab
         start = new Date();
         start.setHours(13);
         start.setDate(10);
-        paintHistogram('domainsChart', 'day', 'totalEngagedTime', start, 3);
+        paintHistogram('domainsChart', 'hour', 'totalEngagedTime', start, 7);
 
         $('ul.navBar li').not($('ul.navBar li#selected')).each(function(index, value) {
             className = 'div.' + $(value).attr('class');
@@ -127,34 +132,36 @@ function paintHistogram(elementId, type, metric, start, incraments) {
         start: start,
         number: incraments,
     }, function(response) {
-        var data = response.info.data;
-        console.log(data);
-        var arr = new Array();
-        for(var i = 0; i < data.length; i++) {
+        var rData = response.info.data;
+        // console.log(data);
+        var colors = Highcharts.getOptions().colors;
+        var data = new Array();
+        for(var i = 0; i < rData.length; i++) {
             var categories = new Array();
             var subArr = new Array();
-            for(var j = 0; j < data[i].domains.length; j++) {
-                var subMin = ((data[i].domains[j].msecs / 1000) / 60);
+            for(var j = 0; j < rData[i].domains.length; j++) {
+                var subMin = ((rData[i].domains[j].msecs / 1000) / 60);
                 if(subMin > 0) {
-                    categories.push(data[i].domains[j].name);
+                    categories.push(rData[i].domains[j].name);
                     subArr.push(subMin);
                 }
             }
-            var min = ((data[i].msecs / 1000) / 60);
+            var min = ((rData[i].msecs / 1000) / 60);
             if(metric == 'totalEngagedTime') {
-                arr.push({
-                    x: new Date(data[i].time).getTime(),
+                data.push({
+                    x: new Date(rData[i].time).getTime(),
                     y: min,
                     drilldown: {
                         name: 'domains',
                         categories: categories,
                         data: subArr,
+                        color: colors[1],
                     },
                 });
             }
             else if(metric == 'domainsEngagedTime') {
-                categories.push(data[i].domain);
-                arr.push(min);
+                categories.push(rData[i].domain);
+                data.push(min);
             }
         }
         var xAxis;
@@ -179,10 +186,11 @@ function paintHistogram(elementId, type, metric, start, incraments) {
         function setChart(name, categories, data, color) {
             chart.series[0].remove();
             chart.xAxis[0].setCategories(categories);
+            // console.log(data);
             chart.addSeries({
                 name: name,
                 data: data,
-                color: color,
+                color: color || colors[0],
             });
         }
         
@@ -190,6 +198,7 @@ function paintHistogram(elementId, type, metric, start, incraments) {
         chart = new Highcharts.Chart({
             chart: {
                 renderTo: elementId,
+                zoomType: 'x',
                 type: 'column'
             },
             title: {
@@ -214,6 +223,8 @@ function paintHistogram(elementId, type, metric, start, incraments) {
                                 if (drilldown) { // drill down
                                     setChart(drilldown.name, drilldown.categories, drilldown.data, drilldown.color);
                                 } else { // restore
+                                    chart.options.xAxis.type = 'datetime';
+                                    categories = undefined;
                                     setChart(name, categories, data);
                                 }
                             }
@@ -245,7 +256,7 @@ function paintHistogram(elementId, type, metric, start, incraments) {
             },
             series: [{
                 name: name,
-                data: arr,
+                data: data,
                 // color: 'white'
             }],
             exporting: {
